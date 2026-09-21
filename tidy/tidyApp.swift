@@ -1,17 +1,13 @@
-//
-//  tidyApp.swift
-//  tidy
-//
-//  Created by Harshit Kumar on 21/09/26.
-//
-
 import SwiftUI
 
 @main
 struct tidyApp: App {
+    @StateObject private var appState = AppState()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            RootView()
+                .environmentObject(appState)
         }
     }
 }
