@@ -64,7 +64,7 @@ struct ReviewView: View {
                 Spacer().frame(height: 40)
                 
                 // Confirm Button
-                PrimaryButton("Confirm Deletion", icon: "trash", type: .destructive) {
+                PrimaryButton("Confirm Deletion", icon: "trash") {
                     Task {
                         await viewModel.executeDeletion(
                             selection: appState.cleanupSelection,
