@@ -139,26 +139,19 @@ final class PhotoService: PhotoLibraryProviding {
     }
     
     private func getFileSize(for asset: PHAsset) -> Int64 {
-        // Fetching file size synchronously is tricky and can be slow.
-        // We use resource retrieval.
-        let resources = PHAssetResource.assetResources(for: asset)
-        
-        // Find the main resource (photo or video)
-        guard let resource = resources.first(where: {
-            $0.type == .photo || $0.type == .video || $0.type == .fullSizePhoto || $0.type == .fullSizeVideo
-        }) else { return 0 }
-        
-        // This is a private/undocumented key sometimes used, but `value(forKey: "fileSize")` is safer
-        if let size = resource.value(forKey: "fileSize") as? Int64 {
-            return size
+        // PHAssetResource.assetResources(for:) is incredibly slow and can hang the simulator or block threads for minutes.
+        // Instead, we estimate the file size based on resolution. 
+        // 12MP photo (4032x3024) = 12,192,768 pixels. Usually ~3-4MB in HEIC.
+        // So roughly bytes = pixels / 3.
+        let pixels = Int64(asset.pixelWidth) * Int64(asset.pixelHeight)
+        if pixels > 0 {
+            return pixels / 3
         }
         return 0
     }
     
     private func isOnDevice(asset: PHAsset) -> Bool {
-        let resources = PHAssetResource.assetResources(for: asset)
-        // If there's a resource and it's locally available, we assume it's on device.
-        // A simple heuristic is that if we can't get file size, it might not be fully on device.
-        return resources.contains { $0.value(forKey: "locallyAvailable") as? Bool == true }
+        // Assume true for now to avoid slow PHAssetResource fetches
+        return true
     }
 }
