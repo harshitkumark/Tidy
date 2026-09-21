@@ -3,6 +3,7 @@ import SwiftUI
 struct LargeVideosView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: LargeVideosViewModel
+    @State private var showingReview = false
     
     init(photoProvider: PhotoLibraryProviding = PhotoService()) {
         #if DEBUG
@@ -89,12 +90,14 @@ struct LargeVideosView: View {
             }
             await viewModel.load()
         }
+        .navigationDestination(isPresented: $showingReview) {
+            ReviewView()
+        }
     }
     
     private func reviewSelection() {
         appState.cleanupSelection.videoIdentifiers.formUnion(viewModel.selectedItemIDs)
-        // TODO: Navigate to Review View
-        Logger.info("Ready for Review: \(viewModel.selectedItemIDs.count) videos", category: .general)
+        showingReview = true
     }
 }
 

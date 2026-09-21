@@ -3,6 +3,7 @@ import SwiftUI
 struct DuplicateContactsView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: DuplicateContactsViewModel
+    @State private var showingReview = false
     
     init(contactProvider: ContactsProviding = ContactService()) {
         #if DEBUG
@@ -63,12 +64,14 @@ struct DuplicateContactsView: View {
             }
             await viewModel.load()
         }
+        .navigationDestination(isPresented: $showingReview) {
+            ReviewView()
+        }
     }
     
     private func reviewSelection() {
         appState.cleanupSelection.contactMergeGroups = viewModel.operations
-        // TODO: Navigate to Review View
-        Logger.info("Ready for Review: \(viewModel.operations.count) contact merges", category: .general)
+        showingReview = true
     }
 }
 

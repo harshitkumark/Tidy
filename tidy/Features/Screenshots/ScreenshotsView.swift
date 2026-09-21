@@ -5,6 +5,7 @@ struct ScreenshotsView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: ScreenshotsViewModel
     @State private var showingFilter = false
+    @State private var showingReview = false
     
     // Grid configuration: 3 columns with minimal spacing
     private let columns = [
@@ -94,12 +95,14 @@ struct ScreenshotsView: View {
             }
             await viewModel.load()
         }
+        .navigationDestination(isPresented: $showingReview) {
+            ReviewView()
+        }
     }
     
     private func reviewSelection() {
         appState.cleanupSelection.photoIdentifiers.formUnion(viewModel.selectedItemIDs)
-        // TODO: Navigate to Review View (Step 10)
-        Logger.info("Ready for Review: \(viewModel.selectedItemIDs.count) items", category: .general)
+        showingReview = true
     }
 }
 

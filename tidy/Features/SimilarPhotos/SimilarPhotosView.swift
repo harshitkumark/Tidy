@@ -3,6 +3,7 @@ import SwiftUI
 struct SimilarPhotosView: View {
     @Environment(AppState.self) private var appState
     @State private var viewModel: SimilarPhotosViewModel
+    @State private var showingReview = false
     
     init(photoProvider: PhotoLibraryProviding = PhotoService()) {
         #if DEBUG
@@ -71,12 +72,14 @@ struct SimilarPhotosView: View {
             }
             await viewModel.startScanIfNeeded()
         }
+        .navigationDestination(isPresented: $showingReview) {
+            ReviewView()
+        }
     }
     
     private func reviewSelection() {
         appState.cleanupSelection.photoIdentifiers.formUnion(viewModel.selectedItemIDs)
-        // TODO: Navigate to Review View
-        Logger.info("Ready for Review: \(viewModel.selectedItemIDs.count) similar photos", category: .general)
+        showingReview = true
     }
 }
 
