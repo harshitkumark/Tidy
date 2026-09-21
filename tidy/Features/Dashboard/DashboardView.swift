@@ -73,7 +73,7 @@ struct DashboardView: View {
                 case .largeVideos:
                     LargeVideosView()
                 case .duplicateContacts:
-                    Text("Duplicate Contacts (Step 9)").navigationTitle("Contacts")
+                    DuplicateContactsView()
                 case .testMode:
                     #if DEBUG
                     TestModeView()
