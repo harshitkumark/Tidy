@@ -69,7 +69,7 @@ struct DashboardView: View {
                 case .similarPhotos:
                     Text("Similar Photos (Step 8)").navigationTitle("Similar")
                 case .screenshots:
-                    Text("Screenshots (Step 6)").navigationTitle("Screenshots")
+                    ScreenshotsView()
                 case .largeVideos:
                     Text("Large Videos (Step 7)").navigationTitle("Videos")
                 case .duplicateContacts:
