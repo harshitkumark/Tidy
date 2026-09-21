@@ -2,9 +2,11 @@ import SwiftUI
 
 /// Root view: routes between onboarding and the main dashboard
 struct RootView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) private var appState
 
     var body: some View {
+        @Bindable var appState = appState
+
         NavigationStack {
             ZStack {
                 Theme.Colors.background
@@ -50,7 +52,7 @@ struct TestModePill: View {
 // MARK: - Placeholder Views (replaced in later steps)
 
 struct DashboardPlaceholderView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) private var appState
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
@@ -88,7 +90,7 @@ struct DashboardPlaceholderView: View {
 }
 
 struct OnboardingPlaceholderView: View {
-    @EnvironmentObject var appState: AppState
+    @Environment(AppState.self) private var appState
 
     var body: some View {
         VStack(spacing: Theme.Spacing.lg) {
@@ -125,7 +127,7 @@ struct OnboardingPlaceholderView: View {
 
 #Preview("Root - Onboarding") {
     RootView()
-        .environmentObject({
+        .environment({
             let state = AppState()
             state.hasCompletedOnboarding = false
             return state
@@ -134,7 +136,7 @@ struct OnboardingPlaceholderView: View {
 
 #Preview("Root - Dashboard") {
     RootView()
-        .environmentObject({
+        .environment({
             let state = AppState()
             state.hasCompletedOnboarding = true
             return state
@@ -143,7 +145,7 @@ struct OnboardingPlaceholderView: View {
 
 #Preview("Root - Test Mode") {
     RootView()
-        .environmentObject({
+        .environment({
             let state = AppState()
             state.hasCompletedOnboarding = true
             state.isTestMode = true

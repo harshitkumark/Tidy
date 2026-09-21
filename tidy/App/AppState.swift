@@ -1,18 +1,20 @@
 import SwiftUI
+import Observation
 
 /// Global app state: shared selections, settings, test mode flags.
 @MainActor
-final class AppState: ObservableObject {
+@Observable
+final class AppState {
     // MARK: - Cleanup Selection
-    @Published var cleanupSelection = CleanupSelection()
+    var cleanupSelection = CleanupSelection()
 
     // MARK: - Test Mode (DEBUG only)
     #if DEBUG
-    @Published var isTestMode: Bool = false
-    @Published var isDryRun: Bool = false
-    @Published var useMockData: Bool = false
-    @Published var showDebugOverlay: Bool = false
-    @Published var simulatedPermissionState: SimulatedPermission = .none
+    var isTestMode: Bool = false
+    var isDryRun: Bool = false
+    var useMockData: Bool = false
+    var showDebugOverlay: Bool = false
+    var simulatedPermissionState: SimulatedPermission = .none
     #else
     let isTestMode = false
     let isDryRun = false
@@ -22,15 +24,15 @@ final class AppState: ObservableObject {
     #endif
 
     // MARK: - Navigation
-    @Published var hasCompletedOnboarding: Bool {
+    var hasCompletedOnboarding: Bool {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
     }
 
     // MARK: - Lifetime stats
-    @Published var lifetimeItemsDeleted: Int {
+    var lifetimeItemsDeleted: Int {
         didSet { UserDefaults.standard.set(lifetimeItemsDeleted, forKey: "lifetimeItemsDeleted") }
     }
-    @Published var lifetimeBytesFreed: Int64 {
+    var lifetimeBytesFreed: Int64 {
         didSet { UserDefaults.standard.set(lifetimeBytesFreed, forKey: "lifetimeBytesFreed") }
     }
 
@@ -40,7 +42,6 @@ final class AppState: ObservableObject {
         self.lifetimeBytesFreed = Int64(UserDefaults.standard.integer(forKey: "lifetimeBytesFreed"))
 
         #if DEBUG
-        // Check launch argument for test mode
         if CommandLine.arguments.contains("-tidyTestMode") {
             isTestMode = true
         }
