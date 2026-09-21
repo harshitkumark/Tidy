@@ -1,8 +1,11 @@
 import SwiftUI
 
-/// Root view: routes between onboarding and the main dashboard
+/// Root view: routes between onboarding and the main dashboard.
+/// Monitors scene phase to refresh permissions when returning from Settings.
 struct RootView: View {
     @Environment(AppState.self) private var appState
+    @State private var permissionService = PermissionService()
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         @Bindable var appState = appState
@@ -14,8 +17,10 @@ struct RootView: View {
 
                 if appState.hasCompletedOnboarding {
                     DashboardPlaceholderView()
+                        .environment(permissionService)
                 } else {
-                    OnboardingPlaceholderView()
+                    OnboardingView()
+                        .environment(permissionService)
                 }
 
                 // Test Mode pill (DEBUG only)
@@ -27,6 +32,11 @@ struct RootView: View {
                     }
                 }
                 #endif
+            }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active {
+                permissionService.handleScenePhaseActive()
             }
         }
     }
@@ -49,76 +59,106 @@ struct TestModePill: View {
 }
 #endif
 
-// MARK: - Placeholder Views (replaced in later steps)
+// MARK: - Placeholder Dashboard (replaced in Step 3)
 
 struct DashboardPlaceholderView: View {
     @Environment(AppState.self) private var appState
+    @Environment(PermissionService.self) private var permissionService
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            Image(systemName: "sparkles")
-                .font(.system(size: 56))
-                .foregroundStyle(Theme.Colors.mint)
+        ScrollView {
+            VStack(spacing: Theme.Spacing.lg) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 56))
+                    .foregroundStyle(Theme.Colors.mint)
 
-            Text("tidy")
-                .font(Theme.Typography.largeTitle())
-                .foregroundStyle(Theme.Colors.ink)
+                Text("tidy")
+                    .font(Theme.Typography.largeTitle())
+                    .foregroundStyle(Theme.Colors.ink)
 
-            Text("Your storage dashboard will appear here")
-                .font(Theme.Typography.body())
-                .foregroundStyle(Theme.Colors.inkSecondary)
-                .multilineTextAlignment(.center)
+                Text("Your storage dashboard will appear here")
+                    .font(Theme.Typography.body())
+                    .foregroundStyle(Theme.Colors.inkSecondary)
+                    .multilineTextAlignment(.center)
 
-            #if DEBUG
-            VStack(spacing: Theme.Spacing.sm) {
-                SecondaryButton("Open Settings (Test)", icon: "gear") {
-                    // Placeholder for settings navigation
+                // Show permission states for debugging
+                VStack(alignment: .leading, spacing: Theme.Spacing.sm) {
+                    PermissionStatusRow(name: "Photos", status: permissionService.photoStatus)
+                    PermissionStatusRow(name: "Contacts", status: permissionService.contactStatus)
+                    PermissionStatusRow(name: "Calendar", status: permissionService.calendarStatus)
+                }
+                .padding(.top, Theme.Spacing.md)
+
+                // Limited access banner
+                if permissionService.photoStatus == .limited {
+                    LimitedAccessBanner(
+                        photoCount: permissionService.limitedPhotoCount,
+                        onManage: {
+                            // Will present limited library picker
+                        },
+                        onOpenSettings: {
+                            permissionService.openAppSettings()
+                        }
+                    )
+                    .padding(.horizontal)
                 }
 
-                if !appState.isTestMode {
-                    SecondaryButton("Enable Test Mode", icon: "ant") {
-                        appState.isTestMode = true
+                // Denied state
+                if permissionService.photoStatus == .denied {
+                    PermissionBanner(
+                        message: "Photo access is needed to find duplicates",
+                        actionTitle: "Open Settings"
+                    ) {
+                        permissionService.openAppSettings()
+                    }
+                    .padding(.horizontal)
+                }
+
+                #if DEBUG
+                VStack(spacing: Theme.Spacing.sm) {
+                    if !appState.isTestMode {
+                        SecondaryButton("Enable Test Mode", icon: "ant") {
+                            appState.isTestMode = true
+                        }
                     }
                 }
+                .padding(.top, Theme.Spacing.md)
+                #endif
             }
-            .padding(.top, Theme.Spacing.md)
-            #endif
+            .padding(Theme.Spacing.xl)
         }
-        .padding(Theme.Spacing.xl)
         .navigationTitle("Dashboard")
     }
 }
 
-struct OnboardingPlaceholderView: View {
-    @Environment(AppState.self) private var appState
+// MARK: - Permission Status Row (temporary debug helper)
+
+private struct PermissionStatusRow: View {
+    let name: String
+    let status: PermissionStatus
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.lg) {
-            Spacer()
-
-            Image(systemName: "wand.and.stars")
-                .font(.system(size: 64))
-                .foregroundStyle(Theme.Colors.mint)
-
-            Text("Welcome to tidy")
-                .font(Theme.Typography.largeTitle())
-                .foregroundStyle(Theme.Colors.ink)
-
-            Text("Free up storage by finding duplicate photos, old screenshots, large videos, and duplicate contacts.")
+        HStack {
+            Text(name)
                 .font(Theme.Typography.body())
-                .foregroundStyle(Theme.Colors.inkSecondary)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, Theme.Spacing.lg)
-
+                .foregroundStyle(Theme.Colors.ink)
             Spacer()
+            Text(status.rawValue)
+                .font(Theme.Typography.caption())
+                .foregroundStyle(statusColor)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(statusColor.opacity(0.12))
+                .clipShape(Capsule())
+        }
+    }
 
-            PrimaryButton("Get Started", icon: "arrow.right") {
-                withAnimation {
-                    appState.hasCompletedOnboarding = true
-                }
-            }
-            .padding(.horizontal, Theme.Spacing.lg)
-            .padding(.bottom, Theme.Spacing.xl)
+    private var statusColor: Color {
+        switch status {
+        case .authorized: return .green
+        case .limited: return .orange
+        case .denied, .restricted: return Theme.Colors.coral
+        case .notDetermined: return Theme.Colors.inkSecondary
         }
     }
 }
@@ -139,16 +179,6 @@ struct OnboardingPlaceholderView: View {
         .environment({
             let state = AppState()
             state.hasCompletedOnboarding = true
-            return state
-        }())
-}
-
-#Preview("Root - Test Mode") {
-    RootView()
-        .environment({
-            let state = AppState()
-            state.hasCompletedOnboarding = true
-            state.isTestMode = true
             return state
         }())
 }
