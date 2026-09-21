@@ -218,7 +218,7 @@ final class PhotoLibraryChangeObserver: NSObject, PHPhotoLibraryChangeObserver, 
     }
 
     deinit {
-        PHPhotoLibrary.shared().unregister(self)
+        PHPhotoLibrary.shared().unregisterChangeObserver(self)
     }
 
     nonisolated func photoLibraryDidChange(_ changeInstance: PHChange) {
