@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import Photos
 
 /// Protocol for photo library access. Enables mocking in Test Mode and unit tests.
