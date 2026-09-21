@@ -150,4 +150,5 @@ enum DashboardDestination {
     case screenshots
     case largeVideos
     case duplicateContacts
+    case testMode
 }

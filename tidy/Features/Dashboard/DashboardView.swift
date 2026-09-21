@@ -74,6 +74,12 @@ struct DashboardView: View {
                     Text("Large Videos (Step 7)").navigationTitle("Videos")
                 case .duplicateContacts:
                     Text("Duplicate Contacts (Step 9)").navigationTitle("Contacts")
+                case .testMode:
+                    #if DEBUG
+                    TestModeView()
+                    #else
+                    EmptyView()
+                    #endif
                 }
             }
             .onAppear {
@@ -206,7 +212,23 @@ private struct TestModeDashboardControls: View {
             Text("Test Mode Options")
                 .font(.caption.bold())
                 .foregroundStyle(.orange)
-            SecondaryButton("Reset Permissions (Settings)", icon: "gear") {
+            
+            NavigationLink(value: DashboardDestination.testMode) {
+                HStack(spacing: Theme.Spacing.sm) {
+                    Image(systemName: "gear")
+                        .font(.body.weight(.medium))
+                    Text("Open Test Settings & Seeders")
+                        .font(Theme.Typography.headline())
+                }
+                .foregroundStyle(Theme.Colors.mint)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.mint.opacity(0.12))
+                .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.button, style: .continuous))
+            }
+            .buttonStyle(.plain)
+            
+            SecondaryButton("Reset Permissions (Settings)", icon: "lock") {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
