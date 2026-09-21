@@ -67,7 +67,7 @@ struct DashboardView: View {
                 // Placeholders for future steps
                 switch destination {
                 case .similarPhotos:
-                    Text("Similar Photos (Step 8)").navigationTitle("Similar")
+                    SimilarPhotosView()
                 case .screenshots:
                     ScreenshotsView()
                 case .largeVideos:
