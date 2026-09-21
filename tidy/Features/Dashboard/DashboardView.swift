@@ -52,7 +52,7 @@ struct DashboardView: View {
             }
             .background(Theme.Colors.background.ignoresSafeArea())
             .navigationTitle("Dashboard")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     #if DEBUG
@@ -104,30 +104,42 @@ private struct StorageRingSection: View {
     var body: some View {
         VStack(spacing: Theme.Spacing.md) {
             ZStack {
+                // Outer glow for premium feel
+                Circle()
+                    .fill(Theme.Colors.mint.opacity(0.1))
+                    .frame(width: 260, height: 260)
+                    .blur(radius: 20)
+                
                 ProgressRing(
                     progress: storageInfo?.usedFraction ?? 0,
-                    lineWidth: 16,
-                    size: 200,
-                    gradientColors: [Theme.Colors.mint, Theme.Colors.mint.opacity(0.4)]
+                    lineWidth: 20,
+                    size: 240,
+                    gradientColors: [Theme.Colors.mint, Color.teal]
                 )
+                .shadow(color: Theme.Colors.mint.opacity(0.3), radius: 10, x: 0, y: 5)
 
                 VStack(spacing: 4) {
                     if let info = storageInfo {
                         Text(ByteFormatter.formatShort(info.usedCapacity))
-                            .font(Theme.Typography.bigNumber())
+                            .font(.system(size: 52, weight: .bold, design: .rounded))
                             .foregroundStyle(Theme.Colors.ink)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.4)
+                            .padding(.horizontal, 40)
+                        
                         Text("used of \(ByteFormatter.formatShort(info.totalCapacity))")
                             .font(Theme.Typography.caption())
                             .foregroundStyle(Theme.Colors.inkSecondary)
                     } else {
                         SkeletonView()
-                            .frame(width: 100, height: 40)
+                            .frame(width: 120, height: 50)
                         SkeletonView()
                             .frame(width: 80, height: 16)
                     }
                 }
             }
-            .padding(.bottom, Theme.Spacing.sm)
+            .padding(.bottom, Theme.Spacing.lg)
+            .padding(.top, Theme.Spacing.md)
 
             if totalReclaimable > 0 {
                 HStack(spacing: 6) {
@@ -153,20 +165,36 @@ private struct CategoryCard: View {
     var body: some View {
         Button(action: action) {
             Card {
-                VStack(alignment: .leading, spacing: Theme.Spacing.md) {
+                VStack(alignment: .leading, spacing: Theme.Spacing.lg) {
                     HStack {
-                        Image(systemName: category.icon)
-                            .font(.title2)
-                            .foregroundStyle(category.iconColor)
+                        // Icon with a tinted circular background
+                        ZStack {
+                            Circle()
+                                .fill(category.iconColor.opacity(0.15))
+                                .frame(width: 44, height: 44)
+                            
+                            Image(systemName: category.icon)
+                                .font(.title3.weight(.semibold))
+                                .foregroundStyle(category.iconColor)
+                        }
+                        
                         Spacer()
+                        
                         if category.permissionNeeded {
                             Image(systemName: "lock.fill")
                                 .font(.caption)
                                 .foregroundStyle(Theme.Colors.coral)
+                                .padding(8)
+                                .background(Theme.Colors.coral.opacity(0.1))
+                                .clipShape(Circle())
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .font(.caption.weight(.bold))
+                                .foregroundStyle(Theme.Colors.inkSecondary.opacity(0.5))
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(category.title)
                             .font(Theme.Typography.headline())
                             .foregroundStyle(Theme.Colors.ink)
@@ -184,11 +212,11 @@ private struct CategoryCard: View {
                         } else {
                             if let reclaimable = category.reclaimableSize {
                                 Text("Can free \(ByteFormatter.formatShort(reclaimable))")
-                                    .font(Theme.Typography.caption())
+                                    .font(Theme.Typography.caption().weight(.medium))
                                     .foregroundStyle(Theme.Colors.mint)
                             } else if let count = category.count {
                                 Text("\(count) items")
-                                    .font(Theme.Typography.caption())
+                                    .font(Theme.Typography.caption().weight(.medium))
                                     .foregroundStyle(Theme.Colors.inkSecondary)
                             }
                         }
@@ -196,7 +224,7 @@ private struct CategoryCard: View {
                 }
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ScaleButtonStyle())
         .opacity(category.permissionNeeded ? 0.8 : 1.0)
     }
 }

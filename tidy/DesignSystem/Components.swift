@@ -12,9 +12,31 @@ struct Card<Content: View>: View {
     var body: some View {
         content
             .padding(Theme.Spacing.md)
-            .background(Theme.Colors.cardBackground)
+            .background(
+                LinearGradient(
+                    colors: [Theme.Colors.cardBackground, Theme.Colors.cardBackground.opacity(0.95)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
             .clipShape(RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous))
-            .shadow(color: .black.opacity(0.06), radius: 8, x: 0, y: 2)
+            .shadow(color: Theme.Colors.ink.opacity(0.04), radius: 12, x: 0, y: 6)
+            // Subtle inner stroke for glass effect
+            .overlay(
+                RoundedRectangle(cornerRadius: Theme.Radius.card, style: .continuous)
+                    .stroke(Color.white.opacity(0.4), lineWidth: 1)
+                    .blendMode(.overlay)
+            )
+    }
+}
+
+// MARK: - ScaleButtonStyle
+
+struct ScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .animation(.easeOut(duration: 0.2), value: configuration.isPressed)
     }
 }
 
