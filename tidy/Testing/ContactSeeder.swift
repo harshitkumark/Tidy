@@ -59,7 +59,7 @@ struct ContactSeeder {
         c7.givenName = "Test_Dave"
         c7.familyName = "MergeMe"
         c7.organizationName = "TIDY_TEST"
-        c7.phoneNumbers = [CNLabeledValue(label: CNLabelPhoneNumberHome, value: CNPhoneNumber(stringValue: "555-0401"))]
+        c7.phoneNumbers = [CNLabeledValue(label: CNLabelHome, value: CNPhoneNumber(stringValue: "555-0401"))]
         c7.emailAddresses = [CNLabeledValue(label: CNLabelWork, value: "dave@example.com")]
         saveRequest.add(c7, toContainerWithIdentifier: nil)
         
