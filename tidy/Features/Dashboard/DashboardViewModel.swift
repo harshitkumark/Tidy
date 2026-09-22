@@ -67,6 +67,18 @@ final class DashboardViewModel {
                 destination: .largeVideos
             ),
             CategoryCardData(
+                id: "blurry",
+                title: "Blurry Photos",
+                icon: "eyeglasses",
+                iconColor: .cyan,
+                subtitle: nil,
+                reclaimableSize: nil,
+                count: nil,
+                isLoading: true,
+                permissionNeeded: false,
+                destination: .blurryPhotos
+            ),
+            CategoryCardData(
                 id: "contacts",
                 title: "Duplicate Contacts",
                 icon: "person.2.fill",
@@ -128,9 +140,23 @@ final class DashboardViewModel {
             } else {
                 updateCategory(id: "similar", count: 0, reclaimable: 0)
             }
+            
+            // Blurry Photos (Heavy scan)
+            if !allPhotos.isEmpty {
+                let blurScanner = BlurryPhotosScanner(photoProvider: photoProvider)
+                if let blurryPhotos = try? await blurScanner.scan(photos: allPhotos, progressHandler: { _, _ in }) {
+                    let blurrySize = blurryPhotos.reduce(0) { $0 + $1.fileSize }
+                    updateCategory(id: "blurry", count: blurryPhotos.count, reclaimable: blurrySize)
+                } else {
+                    updateCategory(id: "blurry", count: 0, reclaimable: 0)
+                }
+            } else {
+                updateCategory(id: "blurry", count: 0, reclaimable: 0)
+            }
         } else {
             updateCategory(id: "screenshots", count: 0, reclaimable: 0)
             updateCategory(id: "similar", count: 0, reclaimable: 0)
+            updateCategory(id: "blurry", count: 0, reclaimable: 0)
         }
         
         if let allVideos = await videos {
@@ -207,6 +233,7 @@ enum DashboardDestination {
     case similarPhotos
     case screenshots
     case largeVideos
+    case blurryPhotos
     case duplicateContacts
     case videoCompression
     case testMode

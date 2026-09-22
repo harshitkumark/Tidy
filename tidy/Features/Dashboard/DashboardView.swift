@@ -79,6 +79,8 @@ struct DashboardView: View {
                     ScreenshotsView()
                 case .largeVideos:
                     LargeVideosView()
+                case .blurryPhotos:
+                    BlurryPhotosView()
                 case .duplicateContacts:
                     DuplicateContactsView()
                 case .videoCompression:
