@@ -51,7 +51,13 @@ actor BlurryPhotosScanner {
                             return (item, false)
                         }
                         
-                        let isBlurry = self.calculateBlurriness(cgImage: cgImage)
+                        let isBlurry = await withCheckedContinuation { continuation in
+                            DispatchQueue.global(qos: .userInitiated).async {
+                                let blurry = self.calculateBlurriness(cgImage: cgImage)
+                                continuation.resume(returning: blurry)
+                            }
+                        }
+                        
                         return (item, isBlurry)
                     }
                 }

@@ -12,20 +12,26 @@ enum ImageHasher: Sendable {
             throw NSError(domain: "ImageHasher", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get CGImage from UIImage"])
         }
         
-        let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-        let request = VNGenerateImageFeaturePrintRequest()
-        
-        // Prefer speed and lower memory usage since we're just checking for similarity
-        request.imageCropAndScaleOption = .scaleFit
-        
-        try requestHandler.perform([request])
-        
-        guard let results = request.results as? [VNFeaturePrintObservation],
-              let firstResult = results.first else {
-            throw NSError(domain: "ImageHasher", code: 2, userInfo: [NSLocalizedDescriptionKey: "No feature print generated"])
+        return try await withCheckedThrowingContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async {
+                let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+                let request = VNGenerateImageFeaturePrintRequest()
+                request.imageCropAndScaleOption = .scaleFit
+                
+                do {
+                    try requestHandler.perform([request])
+                    
+                    if let results = request.results as? [VNFeaturePrintObservation],
+                       let firstResult = results.first {
+                        continuation.resume(returning: firstResult)
+                    } else {
+                        continuation.resume(throwing: NSError(domain: "ImageHasher", code: 2, userInfo: [NSLocalizedDescriptionKey: "No feature print generated"]))
+                    }
+                } catch {
+                    continuation.resume(throwing: error)
+                }
+            }
         }
-        
-        return firstResult
     }
     
     /// Calculates the perceptual distance between two feature prints.

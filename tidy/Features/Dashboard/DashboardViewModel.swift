@@ -23,7 +23,11 @@ final class DashboardViewModel {
         self.contactProvider = contactProvider
     }
 
+    private var isScanning = false
+
     func load() {
+        if isScanning { return }
+        
         // Storage info
         storageInfo = storageService.getStorageInfo()
 
@@ -117,10 +121,12 @@ final class DashboardViewModel {
         ]
 
         isLoading = false
+        isScanning = true
 
         // Start background scans
         Task {
             await scanAllCategories()
+            isScanning = false
         }
     }
 
