@@ -4,41 +4,48 @@ import UIKit
 
 /// Real implementation of PhotoLibraryProviding interacting with PHPhotoLibrary.
 final class PhotoService: PhotoLibraryProviding {
-    private let imageManager = PHImageManager.default()
+    private let imageManager = PHCachingImageManager()
     
-    // Cache for PHAssets to avoid re-fetching them by ID later
-    // In a real production app with 50,000 photos, this might need to be a more memory-efficient map
-    // or just fetch by localIdentifier when needed. For this scope, an NSCache or dictionary works.
-    private let assetCache = NSCache<NSString, PHAsset>()
+    // NSCache with limits to prevent runaway memory on large libraries
+    private let assetCache: NSCache<NSString, PHAsset> = {
+        let cache = NSCache<NSString, PHAsset>()
+        cache.countLimit = 500 // Keep at most 500 PHAssets in memory
+        cache.totalCostLimit = 50 * 1024 * 1024 // 50 MB budget
+        return cache
+    }()
     
     func fetchAllPhotos() async throws -> [PhotoItem] {
         return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                
                 let options = PHFetchOptions()
-                // Only get images, not videos or audio
                 options.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.image.rawValue)
-                // Sort newest first
                 options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
                 
                 let result = PHAsset.fetchAssets(with: options)
                 var items: [PhotoItem] = []
+                items.reserveCapacity(result.count) // Pre-allocate to avoid reallocs
                 
-                // Prefetching could be added here for performance if needed
-                
+                // Wrap in autoreleasepool to release intermediate ObjC objects each iteration
                 result.enumerateObjects { asset, _, _ in
-                    let item = PhotoItem(
-                        id: asset.localIdentifier,
-                        creationDate: asset.creationDate,
-                        fileSize: self.getFileSize(for: asset),
-                        pixelWidth: asset.pixelWidth,
-                        pixelHeight: asset.pixelHeight,
-                        isFavorite: asset.isFavorite,
-                        isScreenshot: asset.mediaSubtypes.contains(.photoScreenshot),
-                        isInUserAlbum: false, // Would require fetching collections
-                        isOnDevice: self.isOnDevice(asset: asset)
-                    )
-                    items.append(item)
-                    self.assetCache.setObject(asset, forKey: asset.localIdentifier as NSString)
+                    autoreleasepool {
+                        let item = PhotoItem(
+                            id: asset.localIdentifier,
+                            creationDate: asset.creationDate,
+                            fileSize: self.getFileSize(for: asset),
+                            pixelWidth: asset.pixelWidth,
+                            pixelHeight: asset.pixelHeight,
+                            isFavorite: asset.isFavorite,
+                            isScreenshot: asset.mediaSubtypes.contains(.photoScreenshot),
+                            isInUserAlbum: false,
+                            isOnDevice: true
+                        )
+                        items.append(item)
+                    }
                 }
                 
                 continuation.resume(returning: items)
@@ -48,27 +55,34 @@ final class PhotoService: PhotoLibraryProviding {
     
     func fetchAllVideos() async throws -> [VideoItem] {
         return try await withCheckedThrowingContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
+            DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+                guard let self else {
+                    continuation.resume(returning: [])
+                    return
+                }
+                
                 let options = PHFetchOptions()
                 options.predicate = NSPredicate(format: "mediaType = %d", PHAssetMediaType.video.rawValue)
                 options.sortDescriptors = [NSSortDescriptor(key: "creationDate", ascending: false)]
                 
                 let result = PHAsset.fetchAssets(with: options)
                 var items: [VideoItem] = []
+                items.reserveCapacity(result.count)
                 
                 result.enumerateObjects { asset, _, _ in
-                    let item = VideoItem(
-                        id: asset.localIdentifier,
-                        creationDate: asset.creationDate,
-                        fileSize: self.getFileSize(for: asset),
-                        duration: asset.duration,
-                        pixelWidth: asset.pixelWidth,
-                        pixelHeight: asset.pixelHeight,
-                        isFavorite: asset.isFavorite,
-                        isOnDevice: self.isOnDevice(asset: asset)
-                    )
-                    items.append(item)
-                    self.assetCache.setObject(asset, forKey: asset.localIdentifier as NSString)
+                    autoreleasepool {
+                        let item = VideoItem(
+                            id: asset.localIdentifier,
+                            creationDate: asset.creationDate,
+                            fileSize: self.getFileSize(for: asset),
+                            duration: asset.duration,
+                            pixelWidth: asset.pixelWidth,
+                            pixelHeight: asset.pixelHeight,
+                            isFavorite: asset.isFavorite,
+                            isOnDevice: true
+                        )
+                        items.append(item)
+                    }
                 }
                 
                 continuation.resume(returning: items)

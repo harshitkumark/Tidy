@@ -21,46 +21,50 @@ actor SimilarPhotosScanner {
     func scan(photos: [PhotoItem], progressHandler: @escaping (Double, String) -> Void) async throws -> [PhotoGroup] {
         guard !photos.isEmpty else { return [] }
         
-        // Exclude screenshots and items not on device, as they either belong in a different category
-        // or can't be hashed quickly.
-        let targetPhotos = photos.filter { !$0.isScreenshot && $0.isOnDevice }
+        // Exclude screenshots and items not on device
+        var targetPhotos = photos.filter { !$0.isScreenshot && $0.isOnDevice }
+        
+        // Cap at 500 photos to prevent excessive memory usage and scan time
+        // Sort by newest first so we scan the most recent photos
+        if targetPhotos.count > 500 {
+            targetPhotos = Array(targetPhotos.prefix(500))
+            Logger.info("Capping similar photos scan at 500 items (library has \(photos.count))", category: .scan)
+        }
         
         let totalCount = targetPhotos.count
         guard totalCount > 1 else { return [] }
         
         var prints: [(PhotoItem, VNFeaturePrintObservation)] = []
-        var groups: [PhotoGroup] = []
         
         // 1. Generate feature prints
         progressHandler(0.1, "Generating visual signatures...")
         
-        // Process in concurrent batches to avoid memory spikes
         let batchSize = 10
-        for stride in stride(from: 0, to: totalCount, by: batchSize) {
-            let endIndex = min(stride + batchSize, totalCount)
-            let batch = targetPhotos[stride..<endIndex]
+        for batchStart in stride(from: 0, to: totalCount, by: batchSize) {
+            // Check for cancellation between batches
+            try Task.checkCancellation()
             
-            // Generate prints concurrently for the batch
+            let endIndex = min(batchStart + batchSize, totalCount)
+            let batch = targetPhotos[batchStart..<endIndex]
+            
             try await withThrowingTaskGroup(of: (PhotoItem, VNFeaturePrintObservation?).self) { group in
                 for item in batch {
                     group.addTask {
-                        // Load a reasonably sized thumbnail for hashing (doesn't need to be full res)
                         guard let image = await self.photoProvider.loadThumbnail(for: item.id, targetSize: CGSize(width: 300, height: 300)) else {
                             return (item, nil)
                         }
                         do {
-                            let print = try await ImageHasher.generateFeaturePrint(for: image)
-                            return (item, print)
+                            let featurePrint = try await ImageHasher.generateFeaturePrint(for: image)
+                            return (item, featurePrint)
                         } catch {
-                            // Skip failures quietly for individual items
                             return (item, nil)
                         }
                     }
                 }
                 
-                for try await (item, print) in group {
-                    if let print = print {
-                        prints.append((item, print))
+                for try await (item, featurePrint) in group {
+                    if let featurePrint {
+                        prints.append((item, featurePrint))
                     }
                 }
             }
@@ -68,14 +72,14 @@ actor SimilarPhotosScanner {
             let progress = 0.1 + (Double(endIndex) / Double(totalCount)) * 0.7
             progressHandler(progress, "Analyzing photo \(endIndex) of \(totalCount)...")
             
-            // Yield to avoid blocking
             await Task.yield()
         }
         
         // 2. Compare prints to find groups
+        try Task.checkCancellation()
         progressHandler(0.85, "Grouping similar photos...")
         
-        // Keep track of which items have already been assigned to a group
+        var groups: [PhotoGroup] = []
         var processedIndices = Set<Int>()
         
         for i in 0..<prints.count {
@@ -101,7 +105,6 @@ actor SimilarPhotosScanner {
                 }
             }
             
-            // Only create a group if there's more than one item
             if currentGroupItems.count > 1 {
                 let bestItemID = self.determineBestItem(in: currentGroupItems)
                 let group = PhotoGroup(
@@ -112,6 +115,9 @@ actor SimilarPhotosScanner {
                 groups.append(group)
             }
         }
+        
+        // Release prints array to free Vision observation memory
+        prints.removeAll()
         
         progressHandler(1.0, "Found \(groups.count) groups of similar photos")
         return groups
