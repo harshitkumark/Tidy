@@ -3,6 +3,7 @@ import SwiftUI
 struct DashboardView: View {
     @Environment(AppState.self) private var appState
     @Environment(PermissionService.self) private var permissionService
+    @Environment(\.scenePhase) private var scenePhase
     @State private var viewModel = DashboardViewModel()
 
     // Navigation paths for later steps
@@ -90,6 +91,15 @@ struct DashboardView: View {
             }
             .onChange(of: permissionService.contactStatus) { _, newStatus in
                 viewModel.updatePermissionStates(photoStatus: permissionService.photoStatus, contactStatus: newStatus)
+            }
+            .onChange(of: scenePhase) { _, newPhase in
+                if newPhase == .active {
+                    viewModel.load()
+                }
+            }
+            .onChange(of: appState.lifetimeItemsDeleted) { _, _ in
+                // Refresh data when user finishes a cleanup in the Review screen
+                viewModel.load()
             }
         }
     }

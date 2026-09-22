@@ -10,9 +10,17 @@ final class DashboardViewModel {
     var totalReclaimable: Int64 = 0
 
     private let storageService: StorageProviding
-
-    init(storageService: StorageProviding = StorageService()) {
+    private let photoProvider: PhotoLibraryProviding
+    private let contactProvider: ContactsProviding
+    
+    init(
+        storageService: StorageProviding = StorageService(),
+        photoProvider: PhotoLibraryProviding = PhotoService(),
+        contactProvider: ContactsProviding = ContactService()
+    ) {
         self.storageService = storageService
+        self.photoProvider = photoProvider
+        self.contactProvider = contactProvider
     }
 
     func load() {
@@ -74,40 +82,74 @@ final class DashboardViewModel {
 
         isLoading = false
 
-        // Simulate scan completing after a delay (mock data for now)
+        // Start background scans
         Task {
-            try? await Task.sleep(for: .seconds(1.5))
-            updateWithMockData()
+            await scanAllCategories()
         }
     }
 
-    /// Temporary mock data — will be replaced with real scan results
-    private func updateWithMockData() {
-        if let idx = categories.firstIndex(where: { $0.id == "similar" }) {
-            categories[idx].reclaimableSize = 1_450_000_000
-            categories[idx].count = 23
-            categories[idx].subtitle = "23 groups"
-            categories[idx].isLoading = false
+    /// Performs real background scans to populate the Dashboard metrics
+    private func scanAllCategories() async {
+        // We'll update the categories concurrently where possible
+        
+        async let photos = try? photoProvider.fetchAllPhotos()
+        async let videos = try? photoProvider.fetchAllVideos()
+        async let contacts = try? contactProvider.fetchAllContacts()
+        
+        // 1. Screenshots & Large Videos
+        if let allPhotos = await photos {
+            let screenshots = allPhotos.filter { $0.isScreenshot }
+            let screenshotSize = screenshots.reduce(0) { $0 + $1.fileSize }
+            updateCategory(id: "screenshots", count: screenshots.count, reclaimable: screenshotSize)
+            
+            // Similar Photos (Heavy scan)
+            // We run this in the background, but only if they have photos
+            if !allPhotos.isEmpty {
+                let scanner = SimilarPhotosScanner(photoProvider: photoProvider)
+                if let groups = try? await scanner.scan(photos: allPhotos, progressHandler: { _, _ in }) {
+                    let duplicateItems = groups.flatMap { g in g.items.filter { $0.id != g.bestItemID } }
+                    let similarSize = duplicateItems.reduce(0) { $0 + $1.fileSize }
+                    updateCategory(id: "similar", count: duplicateItems.count, reclaimable: similarSize, subtitle: "\(groups.count) groups")
+                } else {
+                    updateCategory(id: "similar", count: 0, reclaimable: 0)
+                }
+            } else {
+                updateCategory(id: "similar", count: 0, reclaimable: 0)
+            }
+        } else {
+            updateCategory(id: "screenshots", count: 0, reclaimable: 0)
+            updateCategory(id: "similar", count: 0, reclaimable: 0)
         }
-        if let idx = categories.firstIndex(where: { $0.id == "screenshots" }) {
-            categories[idx].reclaimableSize = 340_000_000
-            categories[idx].count = 156
-            categories[idx].subtitle = "156 screenshots"
-            categories[idx].isLoading = false
+        
+        if let allVideos = await videos {
+            let largeVideos = allVideos.filter { $0.fileSize >= 50 * 1024 * 1024 }
+            let videoSize = largeVideos.reduce(0) { $0 + $1.fileSize }
+            updateCategory(id: "videos", count: largeVideos.count, reclaimable: videoSize)
+        } else {
+            updateCategory(id: "videos", count: 0, reclaimable: 0)
         }
-        if let idx = categories.firstIndex(where: { $0.id == "videos" }) {
-            categories[idx].reclaimableSize = 2_100_000_000
-            categories[idx].count = 8
-            categories[idx].subtitle = "8 videos"
-            categories[idx].isLoading = false
+        
+        // 2. Contacts
+        if let allContacts = await contacts {
+            let scanner = DuplicateContactsScanner()
+            let duplicateGroups = await scanner.scan(contacts: allContacts)
+            let duplicateCount = duplicateGroups.reduce(0) { $0 + ($1.contacts.count - 1) }
+            updateCategory(id: "contacts", count: duplicateCount, reclaimable: 0, subtitle: "\(duplicateGroups.count) groups")
+        } else {
+            updateCategory(id: "contacts", count: 0, reclaimable: 0)
         }
-        if let idx = categories.firstIndex(where: { $0.id == "contacts" }) {
-            categories[idx].count = 12
-            categories[idx].subtitle = "12 duplicates"
-            categories[idx].isLoading = false
-        }
-
+        
+        // Finalize Total
         totalReclaimable = categories.compactMap(\.reclaimableSize).reduce(0, +)
+    }
+    
+    private func updateCategory(id: String, count: Int, reclaimable: Int64, subtitle: String? = nil) {
+        if let idx = categories.firstIndex(where: { $0.id == id }) {
+            categories[idx].count = count
+            if reclaimable > 0 { categories[idx].reclaimableSize = reclaimable }
+            if let subtitle = subtitle { categories[idx].subtitle = subtitle }
+            categories[idx].isLoading = false
+        }
     }
 
     func updatePermissionStates(photoStatus: PermissionStatus, contactStatus: PermissionStatus) {
