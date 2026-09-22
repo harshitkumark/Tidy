@@ -8,37 +8,24 @@ enum ImageHasher: Sendable {
     /// Generates a feature print observation for a given image.
     /// This represents the semantic content of the image, rather than just the pixels.
     static func generateFeaturePrint(for image: UIImage) async throws -> VNFeaturePrintObservation {
-        return try await withCheckedThrowingContinuation { continuation in
-            guard let cgImage = image.cgImage else {
-                continuation.resume(throwing: NSError(domain: "ImageHasher", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get CGImage from UIImage"]))
-                return
-            }
-            
-            let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
-            let request = VNGenerateImageFeaturePrintRequest { request, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                guard let results = request.results as? [VNFeaturePrintObservation],
-                      let firstResult = results.first else {
-                    continuation.resume(throwing: NSError(domain: "ImageHasher", code: 2, userInfo: [NSLocalizedDescriptionKey: "No feature print generated"]))
-                    return
-                }
-                
-                continuation.resume(returning: firstResult)
-            }
-            
-            // Prefer speed and lower memory usage since we're just checking for similarity
-            request.imageCropAndScaleOption = .scaleFit
-            
-            do {
-                try requestHandler.perform([request])
-            } catch {
-                continuation.resume(throwing: error)
-            }
+        guard let cgImage = image.cgImage else {
+            throw NSError(domain: "ImageHasher", code: 1, userInfo: [NSLocalizedDescriptionKey: "Failed to get CGImage from UIImage"])
         }
+        
+        let requestHandler = VNImageRequestHandler(cgImage: cgImage, options: [:])
+        let request = VNGenerateImageFeaturePrintRequest()
+        
+        // Prefer speed and lower memory usage since we're just checking for similarity
+        request.imageCropAndScaleOption = .scaleFit
+        
+        try requestHandler.perform([request])
+        
+        guard let results = request.results as? [VNFeaturePrintObservation],
+              let firstResult = results.first else {
+            throw NSError(domain: "ImageHasher", code: 2, userInfo: [NSLocalizedDescriptionKey: "No feature print generated"])
+        }
+        
+        return firstResult
     }
     
     /// Calculates the perceptual distance between two feature prints.
