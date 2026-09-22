@@ -52,7 +52,7 @@ struct DashboardView: View {
                 .padding(.bottom, Theme.Spacing.xl)
             }
             .background(Theme.Colors.background.ignoresSafeArea())
-            .navigationTitle("Dashboard")
+            .navigationTitle("tidy")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

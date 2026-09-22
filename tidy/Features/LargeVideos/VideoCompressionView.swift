@@ -33,7 +33,7 @@ struct VideoCompressionView: View {
     
     // MARK: - Components
     
-    private var emptyState: View {
+    private var emptyState: some View {
         VStack(spacing: Theme.Spacing.lg) {
             Spacer()
             Image(systemName: "video.slash.fill")

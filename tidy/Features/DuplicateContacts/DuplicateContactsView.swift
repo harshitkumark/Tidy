@@ -2,6 +2,7 @@ import SwiftUI
 
 struct DuplicateContactsView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: DuplicateContactsViewModel
     @State private var showingReview = false
     

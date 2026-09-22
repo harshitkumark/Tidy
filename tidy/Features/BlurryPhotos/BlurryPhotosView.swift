@@ -2,16 +2,28 @@ import SwiftUI
 
 struct BlurryPhotosView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel = BlurryPhotosViewModel()
+    @State private var showingReview = false
     
     var body: some View {
         ZStack {
             Theme.Colors.background.ignoresSafeArea()
             
             if viewModel.isLoading {
-                LoadingView(progress: viewModel.progress, message: viewModel.statusText)
+                VStack(spacing: Theme.Spacing.lg) {
+                    ProgressRing(progress: viewModel.progress, size: 120)
+                    Text(viewModel.statusText)
+                        .font(Theme.Typography.headline())
+                        .foregroundStyle(Theme.Colors.inkSecondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if viewModel.items.isEmpty {
-                emptyState
+                EmptyStateView(
+                    icon: "eyeglasses",
+                    title: "No Blurry Photos",
+                    message: "Your library looks crisp! We couldn't find any blurry photos."
+                )
             } else {
                 content
             }
@@ -46,22 +58,7 @@ struct BlurryPhotosView: View {
         }
     }
     
-    @State private var showingReview = false
-    
     // MARK: - Components
-    
-    private var emptyState: View {
-        VStack(spacing: Theme.Spacing.lg) {
-            Spacer()
-            Image(systemName: "eyeglasses")
-                .font(.system(size: 60))
-                .foregroundStyle(Theme.Colors.inkSecondary)
-            Text("No blurry photos found!")
-                .font(Theme.Typography.headline())
-                .foregroundStyle(Theme.Colors.ink)
-            Spacer()
-        }
-    }
     
     private var content: some View {
         VStack(spacing: 0) {
@@ -74,28 +71,12 @@ struct BlurryPhotosView: View {
                     ForEach(viewModel.items) { item in
                         let isSelected = viewModel.selectedItemIDs.contains(item.id)
                         
-                        ZStack(alignment: .bottomTrailing) {
-                            ThumbnailView(
-                                localIdentifier: item.id,
-                                size: CGSize(width: 150, height: 150)
-                            )
-                            .aspectRatio(1, contentMode: .fill)
-                            .clipped()
-                            
-                            // Dim overlay if selected
-                            if isSelected {
-                                Color.black.opacity(0.3)
-                            }
-                            
-                            // Checkmark
-                            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                                .font(.title3)
-                                .foregroundStyle(isSelected ? Theme.Colors.mint : .white.opacity(0.8))
-                                .padding(6)
-                        }
-                        .onTapGesture {
-                            viewModel.toggleSelection(for: item.id)
-                        }
+                        BlurryPhotoCell(
+                            item: item,
+                            isSelected: isSelected,
+                            photoProvider: appState.isTestMode && appState.useMockData ? MockPhotoLibrary() : PhotoService(),
+                            onTap: { viewModel.toggleSelection(for: item.id) }
+                        )
                     }
                 }
                 .padding(.vertical, 2)
@@ -141,5 +122,59 @@ struct BlurryPhotosView: View {
         appState.cleanupSelection.photoIdentifiers.formUnion(viewModel.selectedItemIDs)
         appState.cleanupSelectionSize += viewModel.selectedSize
         showingReview = true
+    }
+}
+
+// MARK: - Blurry Photo Cell
+
+private struct BlurryPhotoCell: View {
+    let item: PhotoItem
+    let isSelected: Bool
+    let photoProvider: PhotoLibraryProviding
+    let onTap: () -> Void
+    
+    @State private var thumbnail: UIImage?
+    
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .bottomTrailing) {
+                if let thumbnail {
+                    Image(uiImage: thumbnail)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geo.size.width, height: geo.size.width)
+                        .clipped()
+                } else {
+                    Rectangle()
+                        .fill(Theme.Colors.inkSecondary.opacity(0.2))
+                        .frame(width: geo.size.width, height: geo.size.width)
+                        .overlay {
+                            ProgressView()
+                        }
+                }
+                
+                // Selection overlay
+                if isSelected {
+                    Rectangle()
+                        .fill(Color.black.opacity(0.4))
+                        .frame(width: geo.size.width, height: geo.size.width)
+                }
+                
+                // Checkmark
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? Theme.Colors.mint : .white.opacity(0.8))
+                    .padding(6)
+            }
+            .onTapGesture {
+                onTap()
+            }
+            .task {
+                let scale = UIScreen.main.scale
+                let size = geo.size.width * scale
+                thumbnail = await photoProvider.loadThumbnail(for: item.id, targetSize: CGSize(width: size, height: size))
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
     }
 }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LargeVideosView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: LargeVideosViewModel
     @State private var showingReview = false
     
@@ -122,7 +123,7 @@ private struct VideoRow: View {
             Card {
                 HStack(spacing: Theme.Spacing.md) {
                     // Thumbnail
-                    ZStack(alignment: .bottomTrailing) {
+                    ZStack {
                         if let thumbnail {
                             Image(uiImage: thumbnail)
                                 .resizable()
@@ -135,16 +136,31 @@ private struct VideoRow: View {
                                 .frame(width: 80, height: 80)
                         }
                         
-                        // Duration Badge
-                        Text(item.formattedDuration)
-                            .font(.system(size: 10, weight: .bold))
+                        // Play icon overlay
+                        Image(systemName: "play.fill")
+                            .font(.system(size: 20))
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 2)
-                            .background(Color.black.opacity(0.6))
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                            .padding(4)
+                            .padding(8)
+                            .background(Color.black.opacity(0.5))
+                            .clipShape(Circle())
+                        
+                        // Duration Badge
+                        VStack {
+                            Spacer()
+                            HStack {
+                                Spacer()
+                                Text(item.formattedDuration)
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                                    .background(Color.black.opacity(0.6))
+                                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                                    .padding(4)
+                            }
+                        }
                     }
+                    .frame(width: 80, height: 80)
                     
                     // Info
                     VStack(alignment: .leading, spacing: 4) {

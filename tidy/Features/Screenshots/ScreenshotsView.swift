@@ -3,6 +3,7 @@ import Photos
 
 struct ScreenshotsView: View {
     @Environment(AppState.self) private var appState
+    @Environment(\.dismiss) private var dismiss
     @State private var viewModel: ScreenshotsViewModel
     @State private var showingFilter = false
     @State private var showingReview = false
@@ -73,6 +74,22 @@ struct ScreenshotsView: View {
         .navigationTitle("Screenshots")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                if !viewModel.isLoading && !viewModel.items.isEmpty {
+                    Button(action: {
+                        let allIDs = Set(viewModel.items.flatMap(\.items).map(\.id))
+                        if viewModel.selectedItemIDs == allIDs {
+                            viewModel.selectedItemIDs.removeAll()
+                        } else {
+                            viewModel.selectedItemIDs = allIDs
+                        }
+                    }) {
+                        Text(viewModel.selectedItemIDs.count == viewModel.items.flatMap(\.items).count ? "Deselect All" : "Select All")
+                            .font(.subheadline)
+                            .foregroundStyle(Theme.Colors.mint)
+                    }
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Picker("Age", selection: Binding(
