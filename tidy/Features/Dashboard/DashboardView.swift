@@ -81,6 +81,8 @@ struct DashboardView: View {
                     LargeVideosView()
                 case .duplicateContacts:
                     DuplicateContactsView()
+                case .videoCompression:
+                    VideoCompressionView()
                 case .testMode:
                     #if DEBUG
                     TestModeView()

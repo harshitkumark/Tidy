@@ -78,6 +78,18 @@ final class DashboardViewModel {
                 permissionNeeded: false,
                 destination: .duplicateContacts
             ),
+            CategoryCardData(
+                id: "compress",
+                title: "Compress Videos",
+                icon: "arrow.down.right.and.arrow.up.left",
+                iconColor: .teal,
+                subtitle: nil,
+                reclaimableSize: nil,
+                count: nil,
+                isLoading: true,
+                permissionNeeded: false,
+                destination: .videoCompression
+            ),
         ]
 
         isLoading = false
@@ -125,8 +137,12 @@ final class DashboardViewModel {
             let largeVideos = allVideos.filter { $0.fileSize >= 50 * 1024 * 1024 }
             let videoSize = largeVideos.reduce(0) { $0 + $1.fileSize }
             updateCategory(id: "videos", count: largeVideos.count, reclaimable: videoSize)
+            
+            // All videos can be compressed
+            updateCategory(id: "compress", count: allVideos.count, reclaimable: 0)
         } else {
             updateCategory(id: "videos", count: 0, reclaimable: 0)
+            updateCategory(id: "compress", count: 0, reclaimable: 0)
         }
         
         // 2. Contacts
@@ -192,5 +208,6 @@ enum DashboardDestination {
     case screenshots
     case largeVideos
     case duplicateContacts
+    case videoCompression
     case testMode
 }
