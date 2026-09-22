@@ -5,6 +5,7 @@ struct BlurryPhotosView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = BlurryPhotosViewModel()
     @State private var showingReview = false
+    @State private var showingQuickReview = false
     
     var body: some View {
         ZStack {
@@ -32,17 +33,25 @@ struct BlurryPhotosView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                if !viewModel.isLoading && !viewModel.items.isEmpty {
-                    Button(action: {
-                        if viewModel.selectedCount == viewModel.items.count {
-                            viewModel.selectedItemIDs.removeAll()
-                        } else {
-                            viewModel.selectedItemIDs = Set(viewModel.items.map(\.id))
+                HStack(spacing: 16) {
+                    if !viewModel.isLoading && !viewModel.items.isEmpty {
+                        Button { showingQuickReview = true } label: {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
                         }
-                    }) {
-                        Text(viewModel.selectedCount == viewModel.items.count ? "Deselect All" : "Select All")
-                            .font(.subheadline)
-                            .foregroundStyle(Theme.Colors.mint)
+                    }
+                    
+                    if !viewModel.isLoading && !viewModel.items.isEmpty {
+                        Button(action: {
+                            if viewModel.selectedCount == viewModel.items.count {
+                                viewModel.selectedItemIDs.removeAll()
+                            } else {
+                                viewModel.selectedItemIDs = Set(viewModel.items.map(\.id))
+                            }
+                        }) {
+                            Text(viewModel.selectedCount == viewModel.items.count ? "Deselect All" : "Select All")
+                                .font(.subheadline)
+                                .foregroundStyle(Theme.Colors.mint)
+                        }
                     }
                 }
             }
@@ -110,6 +119,12 @@ struct BlurryPhotosView: View {
         }
         .navigationDestination(isPresented: $showingReview) {
             ReviewView()
+        }
+        .navigationDestination(isPresented: $showingQuickReview) {
+            SwipeReviewView(
+                items: viewModel.items,
+                photoProvider: appState.isTestMode && appState.useMockData ? MockPhotoLibrary() : PhotoService()
+            )
         }
         .onChange(of: appState.shouldPopToRoot) { _, newValue in
             if newValue {

@@ -102,6 +102,18 @@ final class DashboardViewModel {
                 permissionNeeded: false,
                 destination: .videoCompression
             ),
+            CategoryCardData(
+                id: "vault",
+                title: "Private Vault",
+                icon: "lock.shield.fill",
+                iconColor: .indigo,
+                subtitle: nil,
+                reclaimableSize: nil,
+                count: nil,
+                isLoading: false,
+                permissionNeeded: false,
+                destination: .privateVault
+            ),
         ]
 
         isLoading = false
@@ -236,5 +248,6 @@ enum DashboardDestination {
     case blurryPhotos
     case duplicateContacts
     case videoCompression
+    case privateVault
     case testMode
 }

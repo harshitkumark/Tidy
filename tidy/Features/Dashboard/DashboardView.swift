@@ -85,6 +85,8 @@ struct DashboardView: View {
                     DuplicateContactsView()
                 case .videoCompression:
                     VideoCompressionView()
+                case .privateVault:
+                    PrivateVaultView()
                 case .testMode:
                     #if DEBUG
                     TestModeView()

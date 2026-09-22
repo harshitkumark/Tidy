@@ -7,6 +7,7 @@ struct ScreenshotsView: View {
     @State private var viewModel: ScreenshotsViewModel
     @State private var showingFilter = false
     @State private var showingReview = false
+    @State private var showingQuickReview = false
     
     // Grid configuration: 3 columns with minimal spacing
     private let columns = [
@@ -91,17 +92,25 @@ struct ScreenshotsView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
-                    Picker("Age", selection: Binding(
-                        get: { viewModel.filterAge },
-                        set: { viewModel.setFilter($0) }
-                    )) {
-                        ForEach(AgeFilter.allCases) { filter in
-                            Text(filter.rawValue).tag(filter)
+                HStack(spacing: 16) {
+                    if !viewModel.isLoading && !viewModel.items.isEmpty {
+                        Button { showingQuickReview = true } label: {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
                         }
                     }
-                } label: {
-                    Image(systemName: "line.3.horizontal.decrease.circle")
+                    
+                    Menu {
+                        Picker("Age", selection: Binding(
+                            get: { viewModel.filterAge },
+                            set: { viewModel.setFilter($0) }
+                        )) {
+                            ForEach(AgeFilter.allCases) { filter in
+                                Text(filter.rawValue).tag(filter)
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "line.3.horizontal.decrease.circle")
+                    }
                 }
             }
         }
@@ -114,6 +123,12 @@ struct ScreenshotsView: View {
         }
         .navigationDestination(isPresented: $showingReview) {
             ReviewView()
+        }
+        .navigationDestination(isPresented: $showingQuickReview) {
+            SwipeReviewView(
+                items: viewModel.items.flatMap(\.items),
+                photoProvider: appState.isTestMode && appState.useMockData ? MockPhotoLibrary() : PhotoService()
+            )
         }
         .onChange(of: appState.shouldPopToRoot) { _, newValue in
             if newValue {
