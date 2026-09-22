@@ -210,12 +210,23 @@ private struct CategoryCard: View {
                                 .frame(height: 14)
                                 .frame(width: 60)
                         } else {
-                            if let reclaimable = category.reclaimableSize {
+                            if let reclaimable = category.reclaimableSize, reclaimable > 0 {
                                 Text("Can free \(ByteFormatter.formatShort(reclaimable))")
                                     .font(Theme.Typography.caption().weight(.medium))
                                     .foregroundStyle(Theme.Colors.mint)
-                            } else if let count = category.count {
+                            } else if let count = category.count, count > 0 {
                                 Text("\(count) items")
+                                    .font(Theme.Typography.caption().weight(.medium))
+                                    .foregroundStyle(Theme.Colors.inkSecondary)
+                            } else if category.count == 0 || category.reclaimableSize == 0 {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                    Text("Clean")
+                                }
+                                .font(Theme.Typography.caption().weight(.bold))
+                                .foregroundStyle(Theme.Colors.mint)
+                            } else {
+                                Text("Tap to scan")
                                     .font(Theme.Typography.caption().weight(.medium))
                                     .foregroundStyle(Theme.Colors.inkSecondary)
                             }
