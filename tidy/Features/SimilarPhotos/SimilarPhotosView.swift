@@ -75,10 +75,16 @@ struct SimilarPhotosView: View {
         .navigationDestination(isPresented: $showingReview) {
             ReviewView()
         }
+        .onChange(of: appState.shouldPopToRoot) { _, newValue in
+            if newValue {
+                dismiss()
+            }
+        }
     }
     
     private func reviewSelection() {
         appState.cleanupSelection.photoIdentifiers.formUnion(viewModel.selectedItemIDs)
+        appState.cleanupSelectionSize += viewModel.selectedSize
         showingReview = true
     }
 }

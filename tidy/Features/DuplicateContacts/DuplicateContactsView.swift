@@ -67,10 +67,16 @@ struct DuplicateContactsView: View {
         .navigationDestination(isPresented: $showingReview) {
             ReviewView()
         }
+        .onChange(of: appState.shouldPopToRoot) { _, newValue in
+            if newValue {
+                dismiss()
+            }
+        }
     }
     
     private func reviewSelection() {
         appState.cleanupSelection.contactMergeGroups = viewModel.operations
+        appState.cleanupSelectionSize += 0 // Contacts don't free up meaningful disk space
         showingReview = true
     }
 }

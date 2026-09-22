@@ -14,6 +14,7 @@ final class ReviewViewModel {
     var videoCount: Int = 0
     var contactDeleteCount: Int = 0
     var contactMergeCount: Int = 0
+    var totalEstimatedSize: Int64 = 0
     
     var totalItemCount: Int {
         photoCount + videoCount + contactDeleteCount + contactMergeCount
@@ -32,11 +33,12 @@ final class ReviewViewModel {
         self.deletionProvider = deletionProvider
     }
     
-    func prepare(with selection: CleanupSelection) {
+    func prepare(with selection: CleanupSelection, estimatedSize: Int64 = 0) {
         photoCount = selection.photoIdentifiers.count
         videoCount = selection.videoIdentifiers.count
         contactDeleteCount = selection.contactIdentifiers.count
         contactMergeCount = selection.contactMergeGroups.count
+        totalEstimatedSize = estimatedSize
     }
     
     func executeDeletion(selection: CleanupSelection, isDryRun: Bool, onComplete: @escaping (Int, Int64) -> Void) async {

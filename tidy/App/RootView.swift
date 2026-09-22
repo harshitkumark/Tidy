@@ -10,29 +10,29 @@ struct RootView: View {
     var body: some View {
         @Bindable var appState = appState
 
-        NavigationStack {
-            ZStack {
-                Theme.Colors.background
-                    .ignoresSafeArea()
+        ZStack {
+            Theme.Colors.background
+                .ignoresSafeArea()
 
-                if appState.hasCompletedOnboarding {
-                    DashboardView()
-                        .environment(permissionService)
-                } else {
+            if appState.hasCompletedOnboarding {
+                DashboardView()
+                    .environment(permissionService)
+            } else {
+                NavigationStack {
                     OnboardingView()
                         .environment(permissionService)
                 }
-
-                // Test Mode pill (DEBUG only)
-                #if DEBUG
-                if appState.isTestMode {
-                    VStack {
-                        TestModePill()
-                        Spacer()
-                    }
-                }
-                #endif
             }
+
+            // Test Mode pill (DEBUG only)
+            #if DEBUG
+            if appState.isTestMode {
+                VStack {
+                    TestModePill()
+                    Spacer()
+                }
+            }
+            #endif
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {

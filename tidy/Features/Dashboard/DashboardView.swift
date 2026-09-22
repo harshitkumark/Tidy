@@ -58,10 +58,16 @@ struct DashboardView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     #if DEBUG
                     Button(action: { appState.isTestMode.toggle() }) {
-                        Image(systemName: "ant")
-                            .foregroundStyle(appState.isTestMode ? .orange : Theme.Colors.inkSecondary)
+                        Image(systemName: "ladybug.fill")
+                            .foregroundStyle(appState.isTestMode ? Theme.Colors.coral : Theme.Colors.inkSecondary)
                     }
                     #endif
+                }
+            }
+            .onChange(of: appState.shouldPopToRoot) { _, newValue in
+                if newValue {
+                    navigationPath.removeLast(navigationPath.count)
+                    appState.shouldPopToRoot = false
                 }
             }
             .navigationDestination(for: DashboardDestination.self) { destination in

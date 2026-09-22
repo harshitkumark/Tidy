@@ -7,6 +7,7 @@ import Observation
 final class AppState {
     // MARK: - Cleanup Selection
     var cleanupSelection = CleanupSelection()
+    var cleanupSelectionSize: Int64 = 0
 
     // MARK: - Test Mode (DEBUG only)
     #if DEBUG
@@ -24,6 +25,7 @@ final class AppState {
     #endif
 
     // MARK: - Navigation
+    var shouldPopToRoot = false
     var hasCompletedOnboarding: Bool {
         didSet { UserDefaults.standard.set(hasCompletedOnboarding, forKey: "hasCompletedOnboarding") }
     }
