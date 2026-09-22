@@ -257,7 +257,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photos to help you clean up space.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "We need access to your contacts to find and merge duplicates.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "We use Face ID to unlock your Private Vault.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -291,7 +293,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "We need access to your photos to help you clean up space.";
+				INFOPLIST_KEY_NSContactsUsageDescription = "We need access to your contacts to find and merge duplicates.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "We use Face ID to unlock your Private Vault.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
