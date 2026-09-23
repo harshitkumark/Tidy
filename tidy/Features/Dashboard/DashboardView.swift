@@ -18,7 +18,6 @@ struct DashboardView: View {
                         storageInfo: viewModel.storageInfo,
                         totalReclaimable: viewModel.totalReclaimable
                     )
-                    .padding(.top, Theme.Spacing.md)
 
                     // Categories Grid
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Theme.Spacing.md) {
@@ -124,44 +123,43 @@ private struct StorageRingSection: View {
     let totalReclaimable: Int64
 
     var body: some View {
-        VStack(spacing: Theme.Spacing.md) {
+        VStack(spacing: Theme.Spacing.sm) {
             ZStack {
                 // Outer glow for premium feel
                 Circle()
-                    .fill(Theme.Colors.mint.opacity(0.1))
-                    .frame(width: 260, height: 260)
-                    .blur(radius: 20)
+                    .fill(Theme.Colors.mint.opacity(0.08))
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 15)
                 
                 ProgressRing(
                     progress: storageInfo?.usedFraction ?? 0,
-                    lineWidth: 20,
-                    size: 240,
+                    lineWidth: 16,
+                    size: 180,
                     gradientColors: [Theme.Colors.mint, Color.teal]
                 )
-                .shadow(color: Theme.Colors.mint.opacity(0.3), radius: 10, x: 0, y: 5)
+                .shadow(color: Theme.Colors.mint.opacity(0.25), radius: 8, x: 0, y: 4)
 
-                VStack(spacing: 4) {
+                VStack(spacing: 2) {
                     if let info = storageInfo {
                         Text(ByteFormatter.formatShort(info.usedCapacity))
-                            .font(.system(size: 52, weight: .bold, design: .rounded))
+                            .font(.system(size: 38, weight: .bold, design: .rounded))
                             .foregroundStyle(Theme.Colors.ink)
                             .lineLimit(1)
-                            .minimumScaleFactor(0.4)
-                            .padding(.horizontal, 40)
+                            .minimumScaleFactor(0.5)
+                            .padding(.horizontal, 30)
                         
                         Text("used of \(ByteFormatter.formatShort(info.totalCapacity))")
                             .font(Theme.Typography.caption())
                             .foregroundStyle(Theme.Colors.inkSecondary)
                     } else {
                         SkeletonView()
-                            .frame(width: 120, height: 50)
+                            .frame(width: 100, height: 40)
                         SkeletonView()
-                            .frame(width: 80, height: 16)
+                            .frame(width: 70, height: 14)
                     }
                 }
             }
-            .padding(.bottom, Theme.Spacing.lg)
-            .padding(.top, Theme.Spacing.md)
+            .padding(.top, Theme.Spacing.sm)
 
             if totalReclaimable > 0 {
                 HStack(spacing: 6) {
