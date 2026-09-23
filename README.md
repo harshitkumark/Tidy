@@ -1,52 +1,75 @@
-# tidy
+<h1 align="center">
+  <br>
+  Tidy - iPhone Storage Cleaner
+</h1>
 
-> A privacy-first iPhone app that helps you free storage by finding similar photos, screenshots, large videos, and duplicate contacts — then deleting them safely after review.
+<p align="center">
+  <b>A beautiful, fast, and completely free iOS app to clean up your iPhone storage.</b>
+</p>
 
-## Features
+<p align="center">
+  <img src="https://img.shields.io/badge/Swift-5.9-F05138.svg?style=flat&logo=swift" alt="Swift">
+  <img src="https://img.shields.io/badge/SwiftUI-Blue.svg?style=flat&logo=swift" alt="SwiftUI">
+  <img src="https://img.shields.io/badge/iOS-17.0+-black.svg?style=flat&logo=apple" alt="iOS 17.0+">
+  <img src="https://img.shields.io/badge/Architecture-MVVM-green.svg?style=flat" alt="Architecture">
+</p>
 
-- **Storage Dashboard** — see how much space you can reclaim at a glance
-- **Similar Photos** — Vision-powered duplicate and near-duplicate detection with smart "best pick"
-- **Screenshots** — bulk-select old screenshots by date
-- **Large Videos** — find and preview space-hogging videos
-- **Duplicate Contacts** — merge or remove duplicate contacts with backup
-- **Review Before Delete** — nothing is removed without your explicit approval
+---
 
-## How to Run
+## 📱 About Tidy
 
-1. Open `tidy.xcodeproj` in Xcode 16+
-2. Select the `tidy` scheme and an iPhone simulator (iOS 17+)
-3. Build and run (⌘R)
+**Tidy** is a powerful iOS utility app built entirely in Swift and SwiftUI. It scans your device to find large, redundant, or blurry media, and duplicate contacts, helping you reclaim precious storage space with just a few taps. Unlike many cleaner apps on the App Store, Tidy is completely free, with no subscriptions or hidden paywalls.
 
-## Test Mode
+## ✨ Features
 
-Enable in Settings → Test Mode (DEBUG builds only). Seeds synthetic photos, videos, and contacts so every feature can be tested without private data. Includes Dry Run mode.
+- **📊 Storage Dashboard**: Beautiful, at-a-glance visualization of your device's storage capacity and reclaimable space.
+- **🖼️ Similar Photos**: Uses Apple's **Vision framework** (`VNFeaturePrintObservation`) to generate perceptual hashes and group near-identical or burst photos.
+- **📱 Screenshots**: Quickly identify and bulk-delete old screenshots.
+- **🎥 Large Videos**: Sorts and lists videos by file size so you can tackle the biggest space-hogs first.
+- **👓 Blurry Photos**: Uses **CoreImage** edge detection algorithms to flag blurry and out-of-focus images.
+- **👥 Duplicate Contacts**: Scans for duplicate contacts by name, email, or phone number, and cleanly merges them using the **Contacts framework**.
+- **🗜️ Video Compression**: Compresses large videos natively using **AVFoundation**, keeping the visual quality while drastically reducing file size.
+- **🔒 Private Vault**: Securely hide sensitive media behind **Face ID**, Touch ID, or a passcode.
 
-## Architecture
+## 🛠️ Architecture & Tech Stack
 
-SwiftUI + MVVM. Zero third-party dependencies. Everything runs on-device — no networking code.
+Tidy is built with modern iOS development best practices:
 
-See [CLAUDE.md](CLAUDE.md) for full architecture documentation.
+- **SwiftUI**: 100% SwiftUI for building fluid, declarative, and responsive user interfaces.
+- **Swift Concurrency (`async/await`)**: Heavy scanning tasks (like image hashing and file size calculations) are offloaded to background threads and Actor-isolated services to ensure the UI remains buttery smooth.
+- **MVVM Pattern**: Clean separation of concerns using the Model-View-ViewModel architecture, leveraging `@Observable` macros for state management.
+- **Native Frameworks**: 
+  - `Photos` (PHAsset management, deletions)
+  - `Vision` (Machine learning image similarity)
+  - `CoreImage` (Blurriness detection)
+  - `Contacts` (Duplicate detection and merging)
+  - `AVFoundation` (Video compression)
+  - `LocalAuthentication` (Face ID / Touch ID)
 
-## Performance
+## 🧪 Developer "Test Mode"
 
-<!-- TODO: Add benchmark results from Step 13 -->
+Tidy includes a built-in **Test Mode** (available only in `#if DEBUG` builds). You can toggle it via the ladybug icon on the Dashboard to access:
+- **Mock Data Injection**: Generates fake photos and contacts so you can test the UI on the Simulator without needing a real iCloud library.
+- **Dry Run Deletions**: Allows you to test the entire selection and deletion flow without actually deleting files from your device.
+- **Simulated Permissions**: Test how the app reacts to "Denied" or "Limited" permission states without needing to dive into the iOS Settings app.
 
-## Screenshots
+## 🚀 Getting Started
 
-<!-- TODO: Add screenshots from Test Mode data -->
+### Prerequisites
+- Xcode 15.0+
+- iOS 17.0+ target device or Simulator
 
-## Known Limitations
+### Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/harshitkumark/Tidy.git
+   ```
+2. Open `tidy.xcodeproj` in Xcode.
+3. Select your desired simulator or connected device.
+4. Hit **Cmd + R** to build and run the app!
 
-- Deleted photos stay in Recently Deleted ~30 days; space returns after that.
-- iCloud-optimized photos not on device are skipped.
-- File sizes may be estimated on rare assets.
-- Tested on simulator with seeded data.
-- Contact merge may not carry every field.
+## 🔐 Privacy by Design
+Tidy processes all your photos, videos, and contacts **100% locally** on your device. No data is ever uploaded to external servers, and the app does not even include networking code. Your data stays yours.
 
-## Privacy
-
-Everything runs on-device. No network calls, no analytics, no third-party SDKs. Verify: `grep -r "URLSession\|URLRequest\|WKWebView" tidy/` returns nothing.
-
-## License
-
-<!-- TODO -->
+---
+*Built as a selection task for the App Builder Intern role.*
