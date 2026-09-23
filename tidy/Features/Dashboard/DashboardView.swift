@@ -142,11 +142,10 @@ private struct StorageRingSection: View {
                 VStack(spacing: 2) {
                     if let info = storageInfo {
                         Text(ByteFormatter.formatShort(info.usedCapacity))
-                            .font(.system(size: 38, weight: .bold, design: .rounded))
+                            .font(.system(size: 30, weight: .bold, design: .rounded))
                             .foregroundStyle(Theme.Colors.ink)
                             .lineLimit(1)
                             .minimumScaleFactor(0.5)
-                            .padding(.horizontal, 30)
                         
                         Text("used of \(ByteFormatter.formatShort(info.totalCapacity))")
                             .font(Theme.Typography.caption())
@@ -158,6 +157,7 @@ private struct StorageRingSection: View {
                             .frame(width: 70, height: 14)
                     }
                 }
+                .frame(width: 140)
             }
             .padding(.top, Theme.Spacing.sm)
 
