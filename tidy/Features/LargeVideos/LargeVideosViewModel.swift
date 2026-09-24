@@ -7,7 +7,7 @@ final class LargeVideosViewModel {
     var items: [VideoItem] = []
     var selectedItemIDs: Set<String> = []
     var isLoading = true
-    var sizeFilter: SizeFilter = .fiftyMB
+    var sizeFilter: SizeFilter = .all
     
     // Output stats
     var selectedCount: Int { selectedItemIDs.count }

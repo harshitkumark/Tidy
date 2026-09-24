@@ -74,7 +74,7 @@ final class PhotoService: PhotoLibraryProviding {
                         let item = VideoItem(
                             id: asset.localIdentifier,
                             creationDate: asset.creationDate,
-                            fileSize: self.getFileSize(for: asset),
+                            fileSize: self.getVideoFileSize(for: asset),
                             duration: asset.duration,
                             pixelWidth: asset.pixelWidth,
                             pixelHeight: asset.pixelHeight,
@@ -162,6 +162,21 @@ final class PhotoService: PhotoLibraryProviding {
             return pixels / 3
         }
         return 0
+    }
+    
+    private func getVideoFileSize(for asset: PHAsset) -> Int64 {
+        // For videos we use PHAssetResource since video count is small (usually <100)
+        // and the pixel heuristic doesn't work for videos at all.
+        let resources = PHAssetResource.assetResources(for: asset)
+        if let videoResource = resources.first(where: { $0.type == .video || $0.type == .fullSizeVideo }) {
+            if let size = videoResource.value(forKey: "fileSize") as? Int64, size > 0 {
+                return size
+            }
+        }
+        // Fallback: estimate from duration and resolution
+        // Typical iPhone video: ~10 Mbps bitrate
+        let estimatedBitrate: Double = 10_000_000 // 10 Mbps
+        return Int64((estimatedBitrate * asset.duration) / 8.0)
     }
     
     private func isOnDevice(asset: PHAsset) -> Bool {
